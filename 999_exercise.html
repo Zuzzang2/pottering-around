@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <title>통합 실습: 포켓몬 검색기</title>
+        <style>
+            @font-face {
+                font-family: "Cafe24-Anemone";
+                src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/Cafe24Ohsquare.woff")
+                    format("woff");
+                font-weight: normal;
+                font-display: swap;
+            }
+            @font-face {
+                font-family: "Joseon-Gulim";
+                src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ChosunGu.woff")
+                    format("woff");
+                font-weight: normal;
+                font-display: swap;
+            }
+
+            body {
+                font-family: "Cafe24-Anemone", sans-serif;
+                background-color: #f4f6f8;
+            }
+            input,
+            button {
+                font-family: "Joseon-Gulim", sans-serif;
+            }
+            input::placeholder {
+                font-family: "Joseon-Gulim", sans-serif;
+            }
+
+            .container {
+                max-width: 500px;
+                margin: 40px auto;
+                padding: 20px;
+                border: 1px solid lightgray;
+                border-radius: 8px;
+                text-align: center;
+                box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            }
+
+            input {
+                padding: 10px;
+                width: 60%;
+                margin-right: 10px;
+            }
+
+            button {
+                padding: 10px;
+                font-weight: 300;
+            }
+
+            #result {
+                margin-top: 20px;
+            }
+
+            #result h2 {
+                margin: 10px 0;
+            }
+
+            #result img {
+                width: 150px;
+                height: 150px;
+                background-color: ghostwhite;
+                border-radius: 50%;
+                transition: all 0.3s ease;
+            }
+
+            .type {
+                display: inline-block;
+                padding: 10px 12px;
+                margin: 5px;
+                border-radius: 15px;
+                color: white;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>포켓몬 정보 조회</h1>
+            <input
+                type="text"
+                id="pokemon-input"
+                placeholder="포켓몬 이름(한글/영문) 또는 번호 입력"
+            />
+            <button id="search-btn">정보 조회</button>
+            <div id="result"></div>
+        </div>
+
+        <script>
+            const searchBtn = document.getElementById("search-btn");
+            const pokemonInput = document.getElementById("pokemon-input");
+            const resultDiv = document.getElementById("result");
+
+            // 버튼 클릭 이벤트 강제 실행
+            pokemonInput.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    searchBtn.click();
+                }
+            });
+
+            searchBtn.addEventListener("click", async () => {
+                let input = pokemonInput.value.trim().toLowerCase();
+                if (!input) {
+                    alert("포켓몬 이름 또는 번호를 입력해주세요!");
+                    return;
+                }
+
+                let idOrName = input;
+                const isKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(input);
+
+                if (isKorean) {
+                    const converted = await getPokemonIdByKoreanName(input);
+                    if (!converted) {
+                        resultDiv.innerHTML = `<p style="color:red;">해당 이름의 포켓몬을 찾을 수 없습니다.</p>`;
+                        return;
+                    }
+                    idOrName = converted;
+                }
+
+                const apiUrl = `https://pokeapi.co/api/v2/pokemon/${idOrName}`;
+
+                try {
+                    resultDiv.innerHTML = "<p>데이터를 불러오는 중...</p>";
+                    const response = await fetch(apiUrl);
+                    if (!response.ok)
+                        throw new Error("해당 포켓몬을 찾을 수 없습니다.");
+                    const pokemonData = await response.json();
+                    await renderPokemon(pokemonData);
+                } catch (error) {
+                    console.error("에러 발생:", error);
+                    resultDiv.innerHTML = `<p style="color: red;">${error.message}</p>`;
+                }
+            });
+
+            async function renderPokemon(data) {
+                const speciesResponse = await fetch(data.species.url);
+                const speciesData = await speciesResponse.json();
+                const koreanName = speciesData.names.find(
+                    (n) => n.language.name === "ko"
+                )?.name;
+
+                const typesHtml = data.types
+                    .map((typeInfo) => {
+                        return `<span class="type" style="background-color: ${getTypeColor(
+                            typeInfo.type.name
+                        )}">${typeInfo.type.name}</span>`;
+                    })
+                    .join(" ");
+
+                const hp = data.stats.find(
+                    (stat) => stat.stat.name === "hp"
+                )?.base_stat;
+                const attack = data.stats.find(
+                    (stat) => stat.stat.name === "attack"
+                )?.base_stat;
+                const defense = data.stats.find(
+                    (stat) => stat.stat.name === "defense"
+                )?.base_stat;
+
+                const height = data.height * 10;
+                const weight = data.weight / 10;
+
+                resultDiv.innerHTML = `
+                    <h2>${koreanName} (${data.name}) #${data.id}</h2>
+                    <div style="text-align: center;">
+                        <img 
+                            src="${data.sprites.front_default}" 
+                            alt="${data.name}"
+                            onmouseover="this.src='${data.sprites.back_default}'"
+                            onmouseout="this.src='${data.sprites.front_default}'"
+                        />
+                        <div style="margin-top: 8px; font-size: 14px; color: lightgray; font-style: italic;">
+                            이미지에 마우스를 올려보세요!
+                        </div>
+                    </div>
+                    <div>
+                        <h3>타입</h3>
+                        ${typesHtml}
+                    </div>
+                    <div>
+                        <h3>스탯</h3>
+                        <p> 체력: ${hp}</p>
+                        <p> 공격력: ${attack}</p>
+                        <p> 방어력: ${defense}</p>
+                        <p> 키: ${height} cm</p>
+                        <p> 몸무게: ${weight} kg</p>
+                    </div>
+                `;
+            }
+
+            function getTypeColor(type) {
+                const colors = {
+                    fire: "orangered",
+                    water: "dodgerblue",
+                    grass: "limegreen",
+                    bug: "darkkhaki",
+                    normal: "lightgray",
+                    poison: "mediumpurple",
+                    electric: "gold",
+                    ground: "sandybrown",
+                    fairy: "lightpink",
+                    fighting: "indianred",
+                    psychic: "hotpink",
+                    rock: "darkgoldenrod",
+                    ghost: "rebeccapurple",
+                    ice: "lightcyan",
+                    dragon: "slateblue",
+                };
+                return colors[type] || "gray";
+            }
+
+            // 한글 이름 → ID 변환 (최초 1회 전체 species fetch)
+            async function getPokemonIdByKoreanName(koreanName) {
+                const cached = localStorage.getItem("korNameToId");
+                if (cached) {
+                    const nameMap = JSON.parse(cached);
+                    return nameMap[koreanName];
+                }
+
+                const map = {};
+                const promises = [];
+                const max = 1010;
+
+                for (let i = 1; i <= max; i++) {
+                    promises.push(
+                        fetch(`https://pokeapi.co/api/v2/pokemon-species/${i}`)
+                            .then((res) => res.json())
+                            .then((species) => {
+                                const kor = species.names.find(
+                                    (n) => n.language.name === "ko"
+                                );
+                                if (kor) {
+                                    map[kor.name] = species.id;
+                                }
+                            })
+                            .catch(() => {})
+                    );
+                }
+
+                await Promise.all(promises);
+                localStorage.setItem("korNameToId", JSON.stringify(map));
+                return map[koreanName];
+            }
+        </script>
+    </body>
+</html>

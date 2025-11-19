@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JSON과 객체 복사</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                line-height: 1.6;
+                padding: 20px;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+            }
+            .box {
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+            }
+            h1,
+            h2,
+            h3 {
+                border-bottom: 2px solid #eee;
+                padding-bottom: 10px;
+            }
+            code {
+                background-color: #e4e4e4;
+                padding: 2px 5px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            button {
+                padding: 10px 15px;
+                font-size: 16px;
+                cursor: pointer;
+                margin-right: 10px;
+            }
+            .warn {
+                color: darkred;
+                font-weight: bold;
+            }
+            .info {
+                color: darkblue;
+                font-weight: bold;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>JSON과 객체 복사 상세 가이드</h1>
+
+            <div class="box">
+                <h2>1. 개념 설명</h2>
+                <h3>JSON (JavaScript Object Notation)</h3>
+                <p>
+                    서로 다른 시스템 간에 데이터를 교환하기 위한
+                    <strong>표준 텍스트 형식</strong>입니다. JavaScript 객체와
+                    매우 유사하게 생겼지만, 순수한 문자열이며 몇 가지 규칙(예:
+                    키는 반드시 큰따옴표 사용)이 있습니다.
+                    클라이언트(브라우저)와 서버가 서로의 데이터를 이해하기 위한
+                    '공용어' 역할을 합니다.
+                </p>
+
+                <h3>직렬화 (Serialization) & 역직렬화 (Deserialization)</h3>
+                <p>
+                    메모리 상에 존재하는 JavaScript 객체는 그 자체로 네트워크를
+                    통해 전송할 수 없습니다. 따라서 전송 가능한 형태인
+                    <strong>문자열(JSON)</strong>로 변환하는 과정이 필요합니다.
+                </p>
+                <ul>
+                    <li>
+                        <strong>직렬화 (Serialization)</strong>: JavaScript
+                        객체를 JSON 문자열로 변환하는 과정입니다.
+                        <code>JSON.stringify()</code>를 사용합니다. (객체 ➡️
+                        문자열)
+                    </li>
+                    <li>
+                        <strong>역직렬화 (Deserialization)</strong>: 서버로부터
+                        받은 JSON 문자열을 다시 JavaScript 객체로 변환하는
+                        과정입니다. <code>JSON.parse()</code>를 사용합니다.
+                        (문자열 ➡️ 객체)
+                    </li>
+                </ul>
+
+                <h3>얕은 복사 (Shallow Copy) vs 깊은 복사 (Deep Copy)</h3>
+                <p>
+                    객체는 변수에 값을 직접 담는 대신, 값이 저장된
+                    <strong>메모리의 주소(참조)</strong>를 저장합니다. 이 때문에
+                    복사 시 원본이 의도치 않게 변경될 수 있습니다.
+                </p>
+                <ul>
+                    <li>
+                        <strong>얕은 복사</strong>: 객체의 최상위 속성만
+                        복사합니다. 중첩된 객체가 있다면 그 객체의
+                        <strong>주소 값만 복사</strong>합니다. 결과적으로
+                        복사본과 원본은 내부에서 같은 객체를 공유하게 됩니다.
+                    </li>
+                    <li>
+                        <strong>깊은 복사</strong>: 객체 내부의 모든 값과 중첩된
+                        객체까지 모두 복제하여
+                        <strong>완전히 독립적인 새 객체</strong>를 만듭니다.
+                        원본과 어떤 주소도 공유하지 않습니다.
+                    </li>
+                </ul>
+            </div>
+
+            <div class="box">
+                <h2>2. 주요 기능/옵션 설명 (복사 방법)</h2>
+                <h3>얕은 복사 방법</h3>
+                <ul>
+                    <li>
+                        <strong>스프레드 연산자 (<code>...</code>)</strong>:
+                        <code>const copied = { ...original };</code>
+                    </li>
+                    <li>
+                        <strong><code>Object.assign()</code></strong
+                        >:
+                        <code>const copied = Object.assign({}, original);</code>
+                    </li>
+                </ul>
+                <h3>깊은 복사 방법 (JSON 직렬화 활용)</h3>
+                <ul>
+                    <li>
+                        <strong
+                            ><code
+                                >JSON.parse(JSON.stringify(obj))</code
+                            ></strong
+                        >
+                        <p>
+                            이 방법은 직렬화와 역직렬화 과정을 이용해 깊은
+                            복사를 구현하는 일종의 '트릭'입니다.
+                        </p>
+                        <ol>
+                            <li>
+                                <code>JSON.stringify(obj)</code>: 객체를 JSON
+                                문자열로 <strong>직렬화</strong>합니다. 이
+                                과정에서 모든 메모리 참조 관계가 끊어지고 순수한
+                                텍스트 데이터만 남습니다.
+                            </li>
+                            <li>
+                                <code>JSON.parse(...)</code>: 이 문자열을 다시
+                                <strong>역직렬화</strong>하여 완전히 새로운
+                                객체를 메모리에 생성합니다.
+                            </li>
+                        </ol>
+                        <p class="warn">
+                            ⚠️ <strong>주의</strong>: 이 방법은 간편하지만, 객체
+                            내의 <code>function</code>,
+                            <code>undefined</code> 속성은 JSON으로 변환되지 않아
+                            소실됩니다. 날짜(<code>Date</code>) 객체는 문자열로
+                            변환되는 등 데이터 유실이 발생할 수 있으므로,
+                            데이터의 형태를 잘 알고 사용해야 합니다.
+                        </p>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="box">
+                <h2>3. 실제 실습</h2>
+                <p>
+                    아래 버튼을 클릭하고 브라우저 개발자 도구(F12)의 Console
+                    탭에서 객체와 JSON 문자열이 어떻게 변하는지 직접 확인하세요.
+                </p>
+                <button id="shallow-copy-btn">얕은 복사 테스트</button>
+                <button id="deep-copy-btn">깊은 복사 테스트</button>
+            </div>
+        </div>
+
+        <script>
+            // --- 실습용 원본 객체 ---
+            const originalUser = {
+                id: 1,
+                name: "홍길동",
+                profile: {
+                    age: 30,
+                    city: "서울",
+                },
+                // JSON으로 변환되지 않는 속성들
+                lastLogin: new Date(),
+                greet: function () {
+                    console.log("hello");
+                },
+                tempData: undefined,
+            };
+
+            // --- 얕은 복사 테스트 ---
+            document
+                .getElementById("shallow-copy-btn")
+                .addEventListener("click", () => {
+                    console.clear();
+                    console.log("--- 얕은 복사(Shallow Copy) 테스트 ---");
+
+                    // 스프레드 연산자로 얕은 복사.
+                    // shallowCopiedUser.profile과 originalUser.profile은 같은 메모리 주소를 가리킵니다.
+                    const shallowCopiedUser = { ...originalUser };
+
+                    // 복사본의 중첩 객체 내부 값을 변경하면 원본까지 함께 변경됩니다.
+                    shallowCopiedUser.profile.city = "부산";
+
+                    console.log("원본 객체:", originalUser);
+                    console.log("얕은 복사본:", shallowCopiedUser);
+                    console.warn(
+                        "결과: 복사본의 중첩 객체를 바꿨더니 원본까지 바뀌었습니다!"
+                    );
+                });
+
+            // --- 깊은 복사 테스트 ---
+            document
+                .getElementById("deep-copy-btn")
+                .addEventListener("click", () => {
+                    console.clear();
+                    console.log(
+                        "--- 깊은 복사(Deep Copy) 테스트 (JSON 직렬화 활용) ---"
+                    );
+
+                    // 원본 객체 상태 초기화
+                    originalUser.profile.city = "서울";
+
+                    // 1. 직렬화 (Serialization): 객체를 JSON 문자열로 변환합니다.
+                    //    이 과정에서 메모리 참조가 모두 끊어지고, function, undefined 속성은 사라집니다. Date 객체는 문자열이 됩니다.
+                    const jsonString = JSON.stringify(originalUser, null, 2); // (null, 2)는 예쁘게 출력하기 위한 옵션
+
+                    console.log("1. 직렬화 후 생성된 JSON 문자열:");
+                    console.log(jsonString);
+
+                    // 2. 역직렬화 (Deserialization): 위 문자열을 기반으로 완전히 새로운 객체를 생성합니다.
+                    const deepCopiedUser = JSON.parse(jsonString);
+
+                    // 3. 복사본의 중첩 객체 내부 값을 변경
+                    // 이 변경은 오직 deepCopiedUser 객체에만 영향을 줍니다.
+                    deepCopiedUser.profile.city = "부산";
+
+                    console.log(
+                        "2. 역직렬화 후 생성된 깊은 복사본 (함수, undefined 소실됨):",
+                        deepCopiedUser
+                    );
+                    console.log("3. 원본 객체 (변경되지 않음):", originalUser);
+
+                    console.info(
+                        "결과: 복사본을 바꿔도 원본은 전혀 영향을 받지 않습니다!"
+                    );
+                });
+        </script>
+    </body>
+</html>

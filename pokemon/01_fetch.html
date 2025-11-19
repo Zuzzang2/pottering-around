@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Fetch API 상세 가이드</title>
+        <style>
+            body {
+                font-family: sans-serif;
+                line-height: 1.6;
+                padding: 20px;
+            }
+            .container {
+                max-width: 800px;
+                margin: auto;
+            }
+            .box {
+                background-color: #f9f9f9;
+                border: 1px solid #ddd;
+                padding: 15px;
+                margin-bottom: 20px;
+                border-radius: 5px;
+            }
+            h1,
+            h2 {
+                border-bottom: 2px solid #eee;
+                padding-bottom: 10px;
+            }
+            code {
+                background-color: #e4e4e4;
+                padding: 2px 5px;
+                border-radius: 3px;
+            }
+            button {
+                padding: 10px 15px;
+                font-size: 16px;
+                cursor: pointer;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Fetch API 상세 가이드</h1>
+
+            <div class="box">
+                <h2>1. 개념 설명</h2>
+                <p>
+                    Fetch API는 JavaScript를 사용하여 네트워크 요청을 보내고
+                    응답을 받을 수 있는 현대적인 인터페이스입니다. 과거의
+                    XMLHttpRequest에 비해 훨씬 간결하고 강력하며, Promise를
+                    기반으로 동작하여 비동기 코드를 쉽게 다룰 수 있습니다.
+                </p>
+            </div>
+
+            <div class="box">
+                <h2>2. 주요 기능/옵션 설명</h2>
+                <p>
+                    <code>fetch()</code> 함수는 기본적으로 두 개의 인자를
+                    받습니다: <code>fetch(resource, options)</code>
+                </p>
+                <ul>
+                    <li>
+                        <strong>resource (URL)</strong>: 요청을 보낼 주소입니다.
+                        (필수)
+                    </li>
+                    <li>
+                        <strong>options (객체)</strong>: 요청에 대한 추가
+                        설정입니다. (선택)
+                    </li>
+                    <ul>
+                        <li>
+                            <code>method</code>: HTTP 요청 메서드 (예: 'GET',
+                            'POST', 'PUT', 'DELETE'). 기본값은 'GET'입니다.
+                        </li>
+                        <li>
+                            <code>headers</code>: 요청 헤더. 데이터
+                            형식('Content-Type') 등을 지정합니다.
+                        </li>
+                        <li>
+                            <code>body</code>: 요청과 함께 보낼 데이터. 'POST'나
+                            'PUT' 요청 시 주로 사용됩니다.
+                        </li>
+                    </ul>
+                </ul>
+            </div>
+
+            <div class="box">
+                <h2>3. 실제 실습</h2>
+                <p>
+                    아래 버튼을 클릭하고 브라우저 개발자 도구(F12)의 Console
+                    탭을 함께 확인하세요.
+                </p>
+                <button id="fetch-btn">데이터 요청</button>
+            </div>
+        </div>
+
+        <script>
+            /*
+        ==================================================================================
+        🎯 1. 개념 설명
+        ==================================================================================
+        1. API (Application Programming Interface) 란?
+           - '애플리케이션을 프로그래밍하기 위한 규칙의 집합'입니다.
+           - 쉽게 비유하면, 식당의 '메뉴판'과 같습니다. 손님(클라이언트)은 메뉴판(API 문서)을 보고
+             정해진 방식대로 주문(요청)해야 주방(서버)에서 요리(데이터)를 받을 수 있습니다.
+           - `https://jsonplaceholder.typicode.com/todos/1`는 "1번 할 일 정보를 주세요"라는 약속된 주소(API Endpoint)입니다.
+        2. fetch 란?
+           - API라는 식당에 '주문(네트워크 요청)'을 넣는 행위 자체입니다.
+           - JavaScript에 내장된 함수이며, Promise 기반으로 동작합니다.
+        3. Promise (프로미스) 란?
+           - '언젠가 결과를 주겠다'는 약속 증서와 같습니다.
+           - fetch를 실행하면 즉시 데이터가 오는 것이 아니라, 'Promise'라는 약속 증서를 먼저 받습니다.
+           - 이 약속의 상태는 3가지가 있습니다.
+             - pending (대기): 아직 약속이 이행되지 않은 상태 (요청을 보내고 기다리는 중)
+             - fulfilled (이행): 약속이 성공적으로 이행된 상태 (서버가 응답을 줌)
+             - rejected (거절): 약속이 실패한 상태 (네트워크 오류 등)
+        4. .then() 과 .catch()
+           - .then(callback): Promise가 fulfilled(성공) 상태가 되면 실행할 코드를 등록하는 곳입니다.
+             "약속이 지켜지면(then) 이걸 실행해줘" 라는 의미입니다.
+           - .catch(callback): Promise가 rejected(실패) 상태가 되면 실행할 코드를 등록하는 곳입니다.
+             "약속이 깨지면(catch) 이걸 실행해줘" 라는 의미입니다.
+        5. Response 객체와 .json()
+           - fetch의 첫 번째 .then()으로 들어오는 것은 최종 데이터가 아닌 'Response' 객체입니다.
+           - 비유하자면, 주문한 음식이 '포장된 상태'로 도착한 것과 같습니다.
+           - 이 포장(Response) 안에는 실제 음식(데이터)뿐만 아니라, 상태 코드(200 OK 등), 헤더 정보 등이 담겨있습니다.
+           - .json() 메서드는 이 포장을 풀어 실제 음식(JSON 데이터)을 꺼내는 행위입니다.
+           - 데이터를 꺼내는 과정(.json()) 역시 비동기로 처리되므로, Promise를 반환합니다. 따라서 뒤에 .then()을 한 번 더 사용해야 합니다.
+        */
+
+            document
+                .getElementById("fetch-btn")
+                .addEventListener("click", async () => {
+                    /*
+            ==================================================================================
+            🎯 3. 실제 실습
+            ==================================================================================
+            */
+
+                    const url = `https://jsonplaceholder.typicode.com/todos/1`;
+                    try {
+                        const response = await fetch(url);
+                        console.log(response);
+                        if (response.ok) {
+                            // const text = await response.text();
+                            // console.log(text);
+                            // JSON.parse(...)
+                            const data = await response.json(); // 한 번에...
+                            console.log(data);
+                            // alert(data["title"]);
+                            alert(data.title);
+                        } else {
+                            throw new Error("요청 에러 발생");
+                        }
+                    } catch (error) {
+                        alert(error.message);
+                    }
+                });
+
+            //     // 실습에 사용할 API 주소입니다. 'jsonplaceholder'는 개발자들이 테스트용으로 사용할 수 있는 가짜 API를 제공합니다.
+            //     const url = "https://jsonplaceholder.typicode.com/todos/1";
+
+            //     // 1. 요청 시작: fetch 함수를 호출하는 순간, 브라우저는 해당 URL에 네트워크 요청을 보냅니다.
+            //     console.log("1. 데이터 요청 시작...");
+
+            //     fetch(url)
+            //         // 2. 응답 수신: 서버가 요청을 받고 응답을 보내면, 첫 번째 .then()이 실행됩니다.
+            //         //    이때 파라미터(여기서는 'response')로 'Response' 객체가 들어옵니다.
+            //         .then((response) => {
+            //             console.log("2. 서버 응답 도착:", response);
+
+            //             // Response 객체에는 status(200), ok(true) 등 다양한 정보가 포함되어 있습니다.
+            //             // 이 정보로 요청이 성공했는지 먼저 확인할 수 있습니다.
+            //             if (!response.ok) {
+            //                 // 만약 응답이 성공적이지 않다면 (예: 404 Not Found, 500 서버 에러)
+            //                 // 에러를 발생시켜 .catch() 블록으로 실행 흐름을 넘깁니다.
+            //                 throw new Error(
+            //                     `HTTP error! status: ${response.status}`
+            //                 );
+            //             }
+
+            //             // 3. 데이터 추출: Response 객체에서 실제 데이터를 추출하기 위해 .json() 메서드를 호출합니다.
+            //             //    이 메서드는 응답의 본문(body)을 JSON으로 파싱하고, 그 결과로 새로운 Promise를 반환합니다.
+            //             console.log("3. 응답 본문을 JSON으로 파싱 시작...");
+            //             return response.json();
+            //         })
+            //         // 4. 데이터 사용: response.json()의 Promise가 성공적으로 이행되면, 두 번째 .then()이 실행됩니다.
+            //         //    이때 파라미터(여기서는 'data')로 JavaScript 객체로 변환된 최종 데이터가 들어옵니다.
+            //         .then((data) => {
+            //             console.log(
+            //                 "4. JSON 파싱 완료. 최종 데이터:",
+            //                 data
+            //             );
+
+            //             // 이제 이 'data' 객체를 가지고 화면에 표시하거나 다른 작업을 수행할 수 있습니다.
+            //             alert(`[성공] 받아온 할 일 제목: ${data.title}`);
+            //         })
+            //         // 5. 에러 처리: fetch() 호출부터 .then() 체인 전체 과정 중 어디에서든 에러가 발생하면
+            //         //    (예: 네트워크 연결 끊김, response.ok가 false일 때 던진 에러 등)
+            //         //    가장 가까운 .catch() 블록이 실행됩니다.
+            //         .catch((error) => {
+            //             console.error("에러 발생!", error);
+            //             alert(
+            //                 `데이터를 가져오는 데 실패했습니다: ${error.message}`
+            //             );
+            //         });
+
+            //     console.log(
+            //         "5. fetch 함수 실행 완료. (하지만 비동기 작업은 아직 진행 중일 수 있습니다.)"
+            //     );
+            // });
+        </script>
+    </body>
+</html>
